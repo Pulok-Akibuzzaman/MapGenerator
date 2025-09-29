@@ -1,6 +1,16 @@
-# Flask Map WKT Generator
+# MapGenerator
 
 A web-based application that generates Well-Known Text (WKT) files for any location using OpenStreetMap data. Built with Flask and OSMnx.
+
+This tool allows users to easily create WKT (Well-Known Text) files containing road network data for any location worldwide. The generated files can be used in GIS applications, spatial databases, and other mapping software that supports the WKT format.
+
+## Quick Start
+
+1. Install Python 3.8+ and clone this repository
+2. Install dependencies: `pip install -r requirements.txt`
+3. Run the app: `python app.py`
+4. Open http://localhost:5000 in your browser
+5. Enter a location (e.g., "Paris, France") and generate your WKT file!
 
 ## Features
 
@@ -15,7 +25,7 @@ A web-based application that generates Well-Known Text (WKT) files for any locat
 
 1. **Clone or download the project**:
    ```bash
-   cd flask_map_app
+   cd MapGenerator
    ```
 
 2. **Create a virtual environment** (recommended):
@@ -91,38 +101,70 @@ Generated WKT files include:
 - Python 3.8+
 - Flask 2.3+
 - OSMnx 1.6+
-- GeoPandas
-- PyProj
-- Geopy
+- GeoPandas 0.14+
+- PyProj 3.6+
+- Geopy 2.4+
+
+All dependencies are listed in `requirements.txt` and will be installed automatically with `pip install -r requirements.txt`.
 
 ## Troubleshooting
 
-**Location not found**: Try adding country name or use full location names
+**Location not found**: 
+- Try adding country name or use full location names
+- Examples: "London, UK" instead of just "London"
+- Use official city names when possible
 
-**Large map sizes**: Processing time increases significantly with size - start with smaller areas
+**Large map sizes**: 
+- Processing time increases significantly with size
+- Start with smaller areas (500m-5km) for testing
+- Large areas (>20km) may take several minutes
 
-**Memory errors**: Reduce map size or detail level for very large areas
+**Memory errors**: 
+- Reduce map size or detail level for very large areas
+- Close other applications to free up memory
+- Consider using "Major Roads" detail level for large areas
+
+**Application won't start**:
+- Ensure all dependencies are installed: `pip install -r requirements.txt`
+- Check that Python 3.8+ is installed
+- Verify Flask installation: `python -c "import flask; print(flask.__version__)"`
 
 ## File Structure
 
 ```
-flask_map_app/
+MapGenerator/
 ├── app.py              # Main Flask application
 ├── map_generator.py    # WKT generation functions
 ├── requirements.txt    # Python dependencies
 ├── templates/
 │   ├── index.html      # Main form interface
 │   └── generating.html # Progress tracking page
-└── wkt_output/         # Generated WKT files (created automatically)
+└── cache/              # Cached data files (created automatically)
 ```
 
 ## Development
 
 To run in development mode:
 ```bash
-export FLASK_ENV=development  # Linux/Mac
-set FLASK_ENV=development     # Windows
+# For Linux/Mac
+export FLASK_ENV=development
+python app.py
+
+# For Windows PowerShell
+$env:FLASK_ENV="development"
+python app.py
+
+# For Windows Command Prompt
+set FLASK_ENV=development
 python app.py
 ```
 
 The application will run on `http://localhost:5000` with debug mode enabled.
+
+## License
+
+This project is open source. Feel free to use, modify, and distribute as needed.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
