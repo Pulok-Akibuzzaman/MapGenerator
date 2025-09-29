@@ -90,14 +90,27 @@ def generate_wkt_background(job_id, location, detail_level, map_size, output_nam
         success, counts, file_path = create_detailed_city_wkt(location, output_name, detail_level, map_size)
         
         if success and file_path:
+            # Ensure file_path is absolute and correct
+            if not os.path.isabs(file_path):
+                file_path = os.path.abspath(file_path)
+            
+            # Double-check file exists and create alternative path if needed
             if os.path.exists(file_path):
                 generation_status[job_id]['status'] = 'completed'
                 generation_status[job_id]['message'] = f'Successfully generated {sum(counts.values())} road segments'
                 generation_status[job_id]['file_path'] = file_path
                 generation_status[job_id]['counts'] = counts
             else:
-                generation_status[job_id]['status'] = 'error'
-                generation_status[job_id]['error'] = 'File was generated but cannot be found'
+                # Try to find the file in wkt_output directory
+                alt_file_path = os.path.join('wkt_output', f"{output_name}.wkt")
+                if os.path.exists(alt_file_path):
+                    generation_status[job_id]['status'] = 'completed'
+                    generation_status[job_id]['message'] = f'Successfully generated {sum(counts.values())} road segments'
+                    generation_status[job_id]['file_path'] = os.path.abspath(alt_file_path)
+                    generation_status[job_id]['counts'] = counts
+                else:
+                    generation_status[job_id]['status'] = 'error'
+                    generation_status[job_id]['error'] = f'File was generated but cannot be found at {file_path} or {alt_file_path}'
         else:
             generation_status[job_id]['status'] = 'error'
             generation_status[job_id]['error'] = f'Failed to generate WKT file for {location}'
@@ -117,20 +130,48 @@ def download_file(job_id):
     """Download generated WKT file"""
     status = generation_status.get(job_id)
     
-    if not status or status['status'] != 'completed' or not status['file_path']:
-        flash('File not ready for download', 'error')
+    if not status:
+        flash('Job not found', 'error')
+        return redirect(url_for('index'))
+    
+    if status['status'] != 'completed':
+        flash(f'File not ready for download. Status: {status["status"]}', 'error')
+        return redirect(url_for('index'))
+    
+    if not status.get('file_path'):
+        flash('File path not available', 'error')
         return redirect(url_for('index'))
     
     file_path = status['file_path']
+    
+    # Check if file exists at the recorded path
     if not os.path.exists(file_path):
-        flash('File not found', 'error')
-        return redirect(url_for('index'))
+        # Try alternative paths
+        output_name = status['output_name']
+        
+        # Try in wkt_output directory with .wkt extension
+        alt_path1 = os.path.join('wkt_output', f"{output_name}.wkt")
+        alt_path2 = os.path.join(os.getcwd(), 'wkt_output', f"{output_name}.wkt")
+        
+        if os.path.exists(alt_path1):
+            file_path = alt_path1
+        elif os.path.exists(alt_path2):
+            file_path = alt_path2
+        else:
+            # Create wkt_output directory if it doesn't exist
+            os.makedirs('wkt_output', exist_ok=True)
+            flash(f'File not found. Please regenerate the map for {status["location"]}', 'error')
+            return redirect(url_for('index'))
     
     # Create a safe download filename
     output_name = status['output_name']
     download_name = f"{output_name}.wkt"
     
-    return send_file(file_path, as_attachment=True, download_name=download_name)
+    try:
+        return send_file(file_path, as_attachment=True, download_name=download_name)
+    except Exception as e:
+        flash(f'Error downloading file: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/test_city', methods=['POST'])
 def test_city():
@@ -181,8 +222,10 @@ def examples():
                          other_cities=other_cities)
 
 if __name__ == '__main__':
-    # Create output directory
-    os.makedirs('wkt_output', exist_ok=True)
+    # Create output directory with full path
+    output_dir = os.path.join(os.getcwd(), 'wkt_output')
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"Created/verified output directory: {output_dir}")
     
     # Run the app
     app.run(debug=True, host='0.0.0.0', port=5000)
