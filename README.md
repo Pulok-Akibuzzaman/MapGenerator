@@ -1,4 +1,4 @@
-# MapGenerator
+# Map Generator
 
 A web-based application that generates Well-Known Text (WKT) files for any location using OpenStreetMap data. Built with Flask and OSMnx.
 
